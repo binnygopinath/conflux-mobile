@@ -1,0 +1,15 @@
+<!--
+  ~ This project is licensed under the open source MPL V2.
+  ~ See https://github.com/openMF/android-client/blob/master/LICENSE.md
+  -->
+
+<resources>
+<style name="AppTheme" parent="AppTheme.Base">
+</style>
+
+    <style name="AppTheme.Base" parent="Theme.AppCompat.Light.DarkActionBar">
+
+        <!-- Customize your theme here. -->
+    </style>
+
+</resources>
