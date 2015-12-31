@@ -8,36 +8,48 @@ package com.mifos.mifosxdroid.online;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 
 import com.mifos.mifosxdroid.OfflineCenterInputActivity;
 import com.mifos.mifosxdroid.R;
+import com.mifos.objects.db.UserDetails;
 import com.mifos.utils.FragmentConstants;
 
-/**
- * Created by ishankhanna on 09/02/14.
- */
-
+import java.util.Iterator;
 
 public class DashboardFragmentActivity extends ActionBarActivity {
+
 
     public final static String TAG = DashboardFragmentActivity.class.getSimpleName();
     public static Context context;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, getResources().getString(R.string.login_successful));
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
+        HomeFragment homeFragment=new HomeFragment();
+        FragmentTransaction fragmentTransaction=getSupportFragmentManager().beginTransaction();
 
-        ClientSearchFragment clientSearchFragment = new ClientSearchFragment();
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.dashboard_global_container, clientSearchFragment, FragmentConstants.FRAG_CLIENT_SEARCH);
+      /* List<Permissions> permission=Permissions.listAll(Permissions.class);
+
+       */
+
+        fragmentTransaction.replace(R.id.dashboard_global_container, homeFragment, getApplication().getResources().getString(R.string.home_fragment));
         fragmentTransaction.commit();
-
+       //to enable home button
+        getSupportActionBar().setDisplayOptions(android.support.v7.app.ActionBar.DISPLAY_HOME_AS_UP | android.support.v7.app.ActionBar.DISPLAY_SHOW_TITLE);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_launcher);
+        getSupportActionBar().setSubtitle(R.string.home);
     }
 
     @Override
@@ -49,27 +61,58 @@ public class DashboardFragmentActivity extends ActionBarActivity {
     }
 
     @Override
+    protected void onResume() {
+        Log.i(TAG,getResources().getString(R.string.dashboard_onResume));
+        super.onResume();
+        //on resume there can be fragments present in the backstack. Check if there are such fragments if present start those fragments
+        if(getSupportFragmentManager().getBackStackEntryCount()!=0)
+        {
+            FragmentManager.BackStackEntry backEntry=getSupportFragmentManager().getBackStackEntryAt(getSupportFragmentManager().getBackStackEntryCount()-1);
+            String fragmentName=backEntry.getName();
+            System.out.println("fragment name"+fragmentName);
+            Fragment fragment = getSupportFragmentManager().findFragmentByTag(fragmentName);
+            if(fragmentName.equals(FragmentConstants.FRAG_CLIENT_SEARCH))
+            {
+                startClientSearchFragment(fragment,fragmentName);
+            }
+            else {
+
+                startFragmentPresentInBackStack(fragment, fragmentName);
+            }
+        }
+
+    }
+
+    public void startClientSearchFragment(Fragment fragment,String TAG)
+    {
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.home_dashboard_container, fragment,TAG);
+        fragmentTransaction.commit();
+    }
+    public void startFragmentPresentInBackStack(Fragment fragment,String TAG)
+    {
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.dashboard_global_container, fragment,TAG);
+        fragmentTransaction.commit();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.d(TAG, "onOptionsItemSelected: " + item.getItemId());
 
         switch (item.getItemId()) {
-            case R.id.item_centers:
-                startActivity(new Intent(this, CentersActivity.class));
-                break;
-            case R.id.mItem_list :
-                loadClientList();
-                break;
-            //case R.id.item_collection_sheet :
-                //startActivity(new Intent(DashboardFragmentActivity.this, GenerateCollectionSheet.class));
-            //    break;
             case R.id.item_offline_centers:
                 startActivity(new Intent(this, OfflineCenterInputActivity.class));
                 break;
             case R.id.logout:
                 startActivity(new Intent(DashboardFragmentActivity.this, LogoutActivity.class));
+                finish();
                 break;
-            case R.id.mItem_create_new_client:
-                openCreateClient();
+            case android.R.id.home:
+                //android.r.id.home is used to home button click listner
+                    startActivity(new Intent(this, DashboardFragmentActivity.class));
+                    finish();
+                break;
 
             default: //DO NOTHING
                 break;
@@ -78,25 +121,22 @@ public class DashboardFragmentActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void loadClientList() {
-
-        ClientListFragment clientListFragment = new ClientListFragment();
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.addToBackStack(FragmentConstants.FRAG_CLIENT_SEARCH);
-        fragmentTransaction.replace(R.id.dashboard_global_container, clientListFragment);
-        fragmentTransaction.commit();
-
+    public boolean onSupportNavigateUp() {
+        return super.onSupportNavigateUp();
     }
 
-    public void openCreateClient(){
-        CreateNewClientFragment createNewClientFragment = new CreateNewClientFragment();
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.addToBackStack(FragmentConstants.FRAG_CREATE_NEW_CLIENT);
-        //fragmentTransaction.add(createNewClientFragment, FragmentConstants.FRAG_CREATE_NEW_CLIENT);
-        fragmentTransaction.replace(R.id.dashboard_global_container, createNewClientFragment);
-        fragmentTransaction.commit();
-    }
+    @Override
+    public void onBackPressed() {
+        EditText editText = (EditText) findViewById(R.id.et_search_by_id);
+        if (editText != null) {
+            editText.setText("");
 
+        }
+        super.onBackPressed();
+        if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+            getSupportActionBar().setSubtitle(R.string.home);
+        }
+    }
 }
 
 
